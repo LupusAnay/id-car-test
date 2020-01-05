@@ -1,6 +1,7 @@
 module Methods where
 
 import           App
+import           Control.Monad.Logger
 import           Control.Monad.Reader
 import           Data
 import           Database.Persist
@@ -14,10 +15,13 @@ createProjectMethod = toMethod "createProject" createProject (Required "project"
 
 getAllProjectsMethod = toMethod "getAllProjects" getAllProjects ()
 
-createProject :: (MonadConfig m, MonadDB m) => Project -> RpcResult m String
+createProject :: (MonadLogger m, MonadConfig m, MonadDB m) => Project -> RpcResult m String
 createProject project = do
+  logInfoNS "HANDLERS" "Creating new project"
   id <- lift . runDatabaseStatement $ insert project
   pure . show . fromSqlKey $ id
 
-getAllProjects :: (MonadConfig m, MonadDB m) => RpcResult m [Entity Project]
-getAllProjects = lift . runDatabaseStatement $ selectList [] [Asc ProjectName]
+getAllProjects :: (MonadLogger m, MonadConfig m, MonadDB m) => RpcResult m [Entity Project]
+getAllProjects = do
+  logInfoNS "HANDLERS" "Selecting all projects"
+  lift . runDatabaseStatement $ selectList [] [Asc ProjectName]
