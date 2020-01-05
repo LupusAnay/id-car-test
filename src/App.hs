@@ -9,7 +9,7 @@ import           Database.Persist.Sql
 
 data Config =
   Config
-    { dbUri  :: Text
+    { dbUri      :: Text
     , serverPort :: Int
     , dbPoolSize :: Int
     }
@@ -25,18 +25,20 @@ data Env =
 
 type Server = ReaderT Env (LoggingT IO)
 
-class (MonadIO m) => MonadDB m where
+class (MonadIO m) =>
+      MonadDB m
+  where
   runDatabaseStatement :: ReaderT SqlBackend m a -> m a
 
-class (Monad m) => MonadConfig m where
-  get :: (Config -> a) -> m a
+class (Monad m) =>
+      MonadConfig m
+  where
+  getConfigValue :: (Config -> a) -> m a
 
 instance MonadDB Server where
   runDatabaseStatement statement = do
     dbPool <- asks pool
-    withResource dbPool (runReaderT statement)
-    
+    withResource dbPool $ runReaderT statement
+
 instance MonadConfig Server where
-  get getter = do
-    appConfig <- asks config
-    pure $ getter appConfig
+  getConfigValue getter = getter <$> asks config

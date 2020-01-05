@@ -17,7 +17,7 @@ app = run 3000 (application defaultConfig)
 application :: Config -> Request -> (Response -> IO ResponseReceived) -> IO ResponseReceived
 application config request respond =
   runStderrLoggingT $ do
-    pool <- createSqlitePool (dbUri config) (dbPoolSize config) 
+    pool <- createSqlitePool (dbUri config) (dbPoolSize config)
     let env = Env {config = config, pool = pool}
     body <- lift $ lazyRequestBody request
     maybeResponse <- runReaderT (call methods body) env
