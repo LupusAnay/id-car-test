@@ -1,23 +1,24 @@
 module Server where
 
 import           App
-import           Control.Monad.Cont       (lift)
-import           Control.Monad.Logger     (logInfoNS, runStderrLoggingT)
-import           Control.Monad.Reader     (runReaderT)
-import           Data.Pool                (Pool)
-import           Database.Persist.Sql     (SqlBackend)
-import           Database.Persist.Sqlite  (createSqlitePool)
-import           Methods                  (methods)
-import           Network.HTTP.Types       (status200, status500)
-import           Network.JsonRpc.Server   (call)
-import           Network.Wai              (Request, Response, ResponseReceived,
-                                           lazyRequestBody, responseLBS)
-import           Network.Wai.Handler.Warp (run)
+import           Control.Monad.Cont
+import           Control.Monad.Logger
+import           Control.Monad.Reader
+import qualified Data.Text                as T
+import           Database.Persist.Sqlite
+import           Methods
+import           Network.HTTP.Types
+import           Network.JsonRpc.Server
+import           Network.Wai
+import           Network.Wai.Handler.Warp
 
-app = do
-  pool <- runStderrLoggingT $ createSqlitePool (dbUri config) (dbPoolSize config)
-  let env = Env {config = config, pool = pool}
-  run (serverPort config) (requestHandler env)
+app =
+  runStderrLoggingT $ do
+    logInfoNS "ROOT" "Creating database pool"
+    pool <- createSqlitePool (dbUri config) (dbPoolSize config)
+    let env = Env {config = config, pool = pool}
+    logInfoNS "ROOT" ("Running server on port " <> (T.pack . show $ serverPort config))
+    lift $ run (serverPort config) (requestHandler env)
   where
     config = defaultConfig
 
